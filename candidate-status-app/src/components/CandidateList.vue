@@ -133,6 +133,9 @@
 <script>
 import axios from 'axios';
 
+// Set the API URL from environment variable or fallback to localhost
+const API_URL = process.env.VUE_APP_API_URL || 'http://localhost:5000';
+
 export default {
   data() {
     return {
@@ -140,15 +143,15 @@ export default {
       selectedCandidates: [],
       passingYear: '',
       round: '',
-      showComposeModal: false, // Controls the visibility of the compose email modal
-      availableTemplates: [], // Stores templates fetched based on the selected round
-      selectedTemplateId: '', // Stores the ID of the selected template
-      emailSubject: '', // Stores the email subject
-      emailBody: '', // Stores the email body
-      emailStatus: '', // Stores the selected status in the compose email modal
+      showComposeModal: false,
+      availableTemplates: [],
+      selectedTemplateId: '',
+      emailSubject: '',
+      emailBody: '',
+      emailStatus: '',
       notification: {
         message: '',
-        type: '' // 'success' or 'error'
+        type: ''
       }
     };
   },
@@ -163,7 +166,7 @@ export default {
       if (this.round) params.round = this.round;
 
       axios
-        .get('http://127.0.0.1:5000/candidates', { params })
+        .get(`${API_URL}/candidates`, { params })
         .then((response) => {
           this.candidates = response.data.candidates;
         })
@@ -185,7 +188,7 @@ export default {
       this.emailStatus = '';
 
       axios
-        .get('http://127.0.0.1:5000/get_templates', { params: { round: this.round } })
+        .get(`${API_URL}/get_templates`, { params: { round: this.round } })
         .then((response) => {
           this.availableTemplates = response.data.templates;
           if (this.availableTemplates.length === 0) {
@@ -219,12 +222,11 @@ export default {
         return;
       }
 
-      // Send email via backend
       axios
-        .post('http://127.0.0.1:5000/send_emails_by_filter', {
+        .post(`${API_URL}/send_emails_by_filter`, {
           year: this.passingYear,
           round: this.round,
-          status: this.emailStatus, // Include the status filter
+          status: this.emailStatus,
           subject: this.emailSubject,
           body: this.emailBody
         })
@@ -249,9 +251,8 @@ export default {
         return;
       }
 
-      // Proceed without confirmation
       const requests = this.selectedCandidates.map((id) =>
-        axios.post(`http://127.0.0.1:5000/update_status/${id}`, { status: status })
+        axios.post(`${API_URL}/update_status/${id}`, { status })
       );
 
       Promise.all(requests)
@@ -372,7 +373,6 @@ p {
 }
 
 .compose-email-container-top {
-  /* Styles for the compose email button at the top */
 }
 
 .btn {
@@ -445,7 +445,6 @@ tr:hover {
   font-weight: bold;
 }
 
-/* Modal Styles */
 .modal {
   position: fixed;
   top: 0;
@@ -510,7 +509,6 @@ tr:hover {
   margin-bottom: 10px;
 }
 
-/* Notification Styles */
 .notification {
   position: fixed;
   top: 20px;

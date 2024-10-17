@@ -1,42 +1,45 @@
-version: '3'
+version: '3.8'
 
 services:
   # Flask Backend Service
-  flask:
-    build:
-      context: .
-      dockerfile: Dockerfile  # Refers to Flask Dockerfile
-    ports:
-      - "5000:5000"  # Expose Flask app on port 5000
+  app:
+    build: .
+    container_name: flask_app
     environment:
-      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:gm5522@db:5432/candidatesdb
-      - FLASK_APP=app.py
+      - SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_SERVER=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USE_TLS=True
+    ports:
+      - "5000:5000"
     depends_on:
       - db
-    volumes:
-      - .:/app
-
-  # npm Frontend Service
-  frontend:
-    build:
-      context: ./candidate-status-app # The path to your frontend directory
-      dockerfile: Dockerfile  # Refers to npm Dockerfile
-    ports:
-      - "3000:3000"  # Expose npm app on port 3000
-    volumes:
-      - ./frontend:/app  # Mount current directory for live code updates
 
   # PostgreSQL Database Service
   db:
     image: postgres:13
+    container_name: postgres_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: gm5522
-      POSTGRES_DB: candidatesdb
-    ports:
-      - "5432:5432"
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Vue.js Frontend Service
+  vue:
+    build:
+      context: ./candidate-status-app
+      dockerfile: Dockerfile
+    container_name: vue_ui
+    ports:
+      - "3000:3000"  # Expose Vue.js on port 8080 as defined in Dockerfile
+    depends_on:
+      - app
 
 volumes:
   postgres_data:
